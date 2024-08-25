@@ -4,6 +4,7 @@ import os
 
 path = "War-Thunder-Datamine/lang.vromfs.bin_u/lang/units.csv"
 out = "out"
+correct_name_types = True
 
 languages = {
     "<English>": "en", "<French>": "fr", "<Italian>": "it", "<German>": "de",
@@ -22,10 +23,16 @@ def process(csv_data):
     for row in csv_data:
         unit_id = row.get("<ID|readonly|noverify>")
         if unit_id:
+            base_id = "_".join(unit_id.split("_")[:-1])
+            
             for lang_key, lang_code in languages.items():
                 name = row.get(lang_key)
                 if name:
-                    units[lang_code][unit_id] = name
+                    if correct_name_types and unit_id.endswith("_0"):
+                        units[lang_code][base_id] = name
+                    elif not correct_name_types:
+                        units[lang_code][unit_id] = name
+
     return units
 
 def export(data, lang_code):
@@ -36,7 +43,6 @@ def export(data, lang_code):
     print(f'Exported language "{lang_code}" to "{file_path}".')
 
 def main():
-    os.makedirs(out, exist_ok=True)
     with open(path, mode="r", encoding="utf-8") as csv_file:
         csv_data = list(csv.DictReader(csv_file, delimiter=";", quotechar="\""))
     units = process(csv_data)
